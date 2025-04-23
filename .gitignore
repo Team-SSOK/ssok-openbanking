@@ -1,0 +1,61 @@
+HELP.md
+
+# 빌드
+.gradle/
+build/
+
+# Gradle Wrapper는 포함
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE 설정
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# 기타 빌드 결과물
+out/
+bin/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# 보안 관련 설정
+.env
+.env.*
+application-*.yml
+application-*.yaml
+application-*.properties
+
+# 로그 / 테스트
+*.log
+/test-results/
+/build/reports/
+/jacoco/
+
+# OS 및 임시파일
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+
+# 임시 파일
+*.tmp
+*.bak
+*.swp
+
