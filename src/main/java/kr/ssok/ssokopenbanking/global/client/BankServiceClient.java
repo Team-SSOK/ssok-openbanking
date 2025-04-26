@@ -1,21 +1,30 @@
 package kr.ssok.ssokopenbanking.global.client;
 
+import kr.ssok.ssokopenbanking.global.apiPayload.ApiResponse;
+import kr.ssok.ssokopenbanking.global.dto.request.BankAccountBalanceReadRequestDto;
+import kr.ssok.ssokopenbanking.global.dto.request.BankAccountOwnerReadRequestDto;
+import kr.ssok.ssokopenbanking.global.dto.request.BankAccountReadRequestDto;
+import kr.ssok.ssokopenbanking.global.dto.response.BankAccountBalanceInfoDto;
+import kr.ssok.ssokopenbanking.global.dto.response.BankAccountInfoDto;
+import kr.ssok.ssokopenbanking.global.dto.response.BankAccountOwnerInfoDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient(name="bank-service")
 public interface BankServiceClient {
 
     // 계좌 조회 API
     @GetMapping("/api/bank/account")
-    ResponseEntity<BankAccountReadResponseDto> readAccount(@RequestBody BankAccountReadRequestDto requestDto);
+    ApiResponse<List<BankAccountInfoDto>> readAccount(@RequestBody BankAccountReadRequestDto requestDto);
 
     // 계좌 실명 조회 API (예금주명 조회)
     @GetMapping("/api/bank/account/owner")
-    ResponseEntity<BankAccountOwnerReadResponseDto> readAccountOwner(@RequestBody BankAccountOwnerReadRequestDto requestDto);
+    ApiResponse<BankAccountOwnerInfoDto> readAccountOwner(@RequestBody BankAccountOwnerReadRequestDto requestDto);
 
     // 계좌 유효성 검사 API
     @GetMapping("/api/bank/account/valid")
@@ -36,5 +45,9 @@ public interface BankServiceClient {
     // 입금 이체 API
     @PostMapping("/api/bank/transfer/deposit")
     ResponseEntity<BankTransferDepositResponseDto> deposit(@RequestBody BankTransferDepositRequestDto requestDto);
+
+    // 계좌 잔액 조회 API
+    @GetMapping("/api/bank/account/balance")
+    ApiResponse<BankAccountBalanceInfoDto> readAccountBalance(@RequestBody BankAccountBalanceReadRequestDto requestDto);
 
 }
