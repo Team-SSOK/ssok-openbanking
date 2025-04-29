@@ -3,7 +3,7 @@ package kr.ssok.ssokopenbanking.authentication.controller;
 import kr.ssok.ssokopenbanking.authentication.dto.request.ApiKeyIssueRequestDto;
 import kr.ssok.ssokopenbanking.authentication.dto.response.ApiKeyIssueResultDto;
 import kr.ssok.ssokopenbanking.authentication.service.ApiKeyService;
-import kr.ssok.ssokopenbanking.global.apiPayload.ApiResponse;
+import kr.ssok.ssokopenbanking.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,7 +25,7 @@ public class ApiKeyController {
 
         ApiKeyIssueResultDto apiKey = apiKeyService.generateApiKey(requestDto.getServiceName(), requestDto.getAdminName(), requestDto.getDomain());
 
-        return ApiResponse.onSuccess(apiKey);
+        return ApiResponse.success(apiKey);
     }
 
 }

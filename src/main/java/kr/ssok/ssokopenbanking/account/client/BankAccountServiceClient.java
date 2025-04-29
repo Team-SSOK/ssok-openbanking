@@ -1,12 +1,12 @@
 package kr.ssok.ssokopenbanking.account.client;
 
-import kr.ssok.ssokopenbanking.global.apiPayload.ApiResponse;
 import kr.ssok.ssokopenbanking.account.dto.request.BankAccountBalanceReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.request.BankAccountOwnerReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.request.BankAccountReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.response.BankAccountBalanceInfoDto;
 import kr.ssok.ssokopenbanking.account.dto.response.BankAccountInfoDto;
 import kr.ssok.ssokopenbanking.account.dto.response.BankAccountOwnerInfoDto;
+import kr.ssok.ssokopenbanking.global.response.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
