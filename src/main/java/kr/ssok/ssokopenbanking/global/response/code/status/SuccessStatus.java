@@ -12,7 +12,10 @@ public enum SuccessStatus implements ResponseCode {
 
     // 일반 성공 응답
     OK(HttpStatus.OK, "200", "요청이 성공적으로 처리되었습니다."),
-    TRANSFER_SUCCESS(HttpStatus.OK, "200", "송금에 성공했습니다.");
+    TRANSFER_SUCCESS(HttpStatus.OK, "200", "송금에 성공했습니다."),
+    ACCOUNT_READ_SUCCESS(HttpStatus.OK, "200", "계좌 목록 조회가 완료되었습니다."),
+    ACCOUNT_BALANCE_READ_SUCCESS(HttpStatus.OK, "200", "계좌 잔액 조회가 완료되었습니다."),
+    ACCOUNT_OWNER_READ_SUCCESS(HttpStatus.OK, "200", "계좌 실명 조회가 완료되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

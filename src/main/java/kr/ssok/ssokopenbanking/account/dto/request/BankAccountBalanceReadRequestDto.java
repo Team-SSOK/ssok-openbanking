@@ -1,4 +1,4 @@
-package kr.ssok.ssokopenbanking.global.dto.response;
+package kr.ssok.ssokopenbanking.account.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BankAccountOwnerInfoDto {
-    private String username;
+public class BankAccountBalanceReadRequestDto {
+    private String account;
 }
