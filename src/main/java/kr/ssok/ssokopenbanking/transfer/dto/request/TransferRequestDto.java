@@ -16,4 +16,6 @@ public class TransferRequestDto {
     private final String recvAccountNumber;
     private final String recvBankCode;
     private final Long amount;
+    private final String sendName;
+    private final String revName;
 }
