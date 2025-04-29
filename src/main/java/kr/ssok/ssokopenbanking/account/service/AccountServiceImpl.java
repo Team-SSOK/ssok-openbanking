@@ -1,5 +1,6 @@
 package kr.ssok.ssokopenbanking.account.service;
 
+import kr.ssok.ssokopenbanking.account.client.BankAccountServiceClient;
 import kr.ssok.ssokopenbanking.account.dto.request.AccountBalanceReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.request.AccountOwnerReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.request.AccountReadRequestDto;
@@ -7,13 +8,12 @@ import kr.ssok.ssokopenbanking.account.dto.response.AccountBalanceInfoResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoListResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountOwnerInfoResultDto;
-import kr.ssok.ssokopenbanking.global.client.BankServiceClient;
-import kr.ssok.ssokopenbanking.global.dto.request.BankAccountBalanceReadRequestDto;
-import kr.ssok.ssokopenbanking.global.dto.request.BankAccountOwnerReadRequestDto;
-import kr.ssok.ssokopenbanking.global.dto.request.BankAccountReadRequestDto;
-import kr.ssok.ssokopenbanking.global.dto.response.BankAccountBalanceInfoDto;
-import kr.ssok.ssokopenbanking.global.dto.response.BankAccountInfoDto;
-import kr.ssok.ssokopenbanking.global.dto.response.BankAccountOwnerInfoDto;
+import kr.ssok.ssokopenbanking.account.dto.request.BankAccountBalanceReadRequestDto;
+import kr.ssok.ssokopenbanking.account.dto.request.BankAccountOwnerReadRequestDto;
+import kr.ssok.ssokopenbanking.account.dto.request.BankAccountReadRequestDto;
+import kr.ssok.ssokopenbanking.account.dto.response.BankAccountBalanceInfoDto;
+import kr.ssok.ssokopenbanking.account.dto.response.BankAccountInfoDto;
+import kr.ssok.ssokopenbanking.account.dto.response.BankAccountOwnerInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
-    private final BankServiceClient bankServiceClient;
+    private final BankAccountServiceClient bankAccountServiceClient;
 
     /**
      * 은행별 계좌 조회
@@ -39,7 +39,7 @@ public class AccountServiceImpl implements AccountService {
                 .username(requestDto.getUsername())
                 .phoneNumber(requestDto.getPhoneNumber())
                 .build();
-        List<BankAccountInfoDto> bankAccounts = bankServiceClient.readAccount(bankRequestDto).getResult();
+        List<BankAccountInfoDto> bankAccounts = bankAccountServiceClient.readAccount(bankRequestDto).getResult();
 
         // 뱅크 서비스에서 받은 응답으로부터 필요한 정보만 추출
         List<AccountInfoDto> accounts = bankAccounts.stream()
@@ -68,7 +68,7 @@ public class AccountServiceImpl implements AccountService {
         BankAccountBalanceReadRequestDto bankRequestDto = BankAccountBalanceReadRequestDto.builder()
                 .account(requestDto.getAccountNumber())
                 .build();
-        BankAccountBalanceInfoDto bankResultDto = bankServiceClient.readAccountBalance(bankRequestDto).getResult();
+        BankAccountBalanceInfoDto bankResultDto = bankAccountServiceClient.readAccountBalance(bankRequestDto).getResult();
 
         return AccountBalanceInfoResultDto.builder()
                 .balance(bankResultDto.getBalance())
@@ -89,7 +89,7 @@ public class AccountServiceImpl implements AccountService {
         BankAccountOwnerReadRequestDto bankRequestDto = BankAccountOwnerReadRequestDto.builder()
                 .account(requestDto.getAccountNumber())
                 .build();
-        BankAccountOwnerInfoDto bankResultDto = bankServiceClient.readAccountOwner(bankRequestDto).getResult();
+        BankAccountOwnerInfoDto bankResultDto = bankAccountServiceClient.readAccountOwner(bankRequestDto).getResult();
 
         return AccountOwnerInfoResultDto.builder()
                 .username(bankResultDto.getUsername())
