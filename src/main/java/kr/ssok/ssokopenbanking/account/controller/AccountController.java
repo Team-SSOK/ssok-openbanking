@@ -7,7 +7,7 @@ import kr.ssok.ssokopenbanking.account.dto.response.AccountBalanceInfoResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoListResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountOwnerInfoResultDto;
 import kr.ssok.ssokopenbanking.account.service.AccountServiceImpl;
-import kr.ssok.ssokopenbanking.global.apiPayload.ApiResponse;
+import kr.ssok.ssokopenbanking.global.response.apiPayload.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
