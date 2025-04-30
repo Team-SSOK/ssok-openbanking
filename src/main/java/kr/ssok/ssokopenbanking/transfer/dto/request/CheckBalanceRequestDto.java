@@ -7,5 +7,5 @@ import lombok.*;
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 public class CheckBalanceRequestDto {
-    private String accountNumber; // 계좌번호
+    private String account; // 계좌번호
 }

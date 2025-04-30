@@ -12,7 +12,7 @@ public class WithdrawRequestDto {
     private final String transactionId;
 
     // 출금 은행 코드
-    private final String withdrawBankCode;
+    private final int withdrawBankCode;
 
     // 출금 계좌 번호
     private final String withdrawAccount;
@@ -21,11 +21,11 @@ public class WithdrawRequestDto {
     private final Long transferAmount;
 
     // 통화 코드
-    private final Long currencyCode;
+    private final int currencyCode;
 
     // 수취인 계좌 번호
     private final String counterAccount;
 
     // 수취인 은행 코드
-    private final String counterBankCode;
+    private final int counterBankCode;
 }

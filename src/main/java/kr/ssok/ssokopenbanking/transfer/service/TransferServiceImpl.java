@@ -57,7 +57,7 @@ public class TransferServiceImpl implements TransferService {
 
             // 3. 잔액 확인
             bankApiService.checkBalance(txId, CheckBalanceRequestDto.builder()
-                    .accountNumber(dto.getSendAccountNumber())
+                    .account(dto.getSendAccountNumber())
                     .build());
 
             // 4. 출금 요청
