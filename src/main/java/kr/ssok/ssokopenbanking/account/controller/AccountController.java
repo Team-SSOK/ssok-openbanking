@@ -7,8 +7,11 @@ import kr.ssok.ssokopenbanking.account.dto.response.AccountBalanceInfoResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoListResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountOwnerInfoResultDto;
 import kr.ssok.ssokopenbanking.account.service.AccountServiceImpl;
-import kr.ssok.ssokopenbanking.global.response.apiPayload.ApiResponse;
+import kr.ssok.ssokopenbanking.global.response.ApiResponse;
+import kr.ssok.ssokopenbanking.global.response.code.status.ErrorStatus;
+import kr.ssok.ssokopenbanking.global.response.code.status.SuccessStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,33 +28,45 @@ public class AccountController {
      * 은행별 계좌 조회 요청 API
      */
     @PostMapping("/accounts/request")
-    public ApiResponse<AccountInfoListResultDto> readAllAccounts(AccountReadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<AccountInfoListResultDto>> readAllAccounts(AccountReadRequestDto requestDto) {
 
         AccountInfoListResultDto accountInfos = accountServiceImpl.readAllAccounts(requestDto);
 
-        return ApiResponse.onSuccess(accountInfos);
+        if (accountInfos != null) {
+            return ApiResponse.success(SuccessStatus.ACCOUNT_READ_SUCCESS, accountInfos).toResponseEntity();
+        } else {
+            return ApiResponse.<AccountInfoListResultDto>error(ErrorStatus.ACCOUNT_READ_FAILED).toResponseEntity();
+        }
     }
 
     /**
      * 계좌 잔액 조회 요청 API
      */
     @GetMapping("/account/balance")
-    public ApiResponse<AccountBalanceInfoResultDto> readBalance(AccountBalanceReadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<AccountBalanceInfoResultDto>> readBalance(AccountBalanceReadRequestDto requestDto) {
 
         AccountBalanceInfoResultDto accountBalanceInfo = accountServiceImpl.readAccountBalance(requestDto);
 
-        return ApiResponse.onSuccess(accountBalanceInfo);
+        if (accountBalanceInfo != null) {
+            return ApiResponse.success(SuccessStatus.ACCOUNT_BALANCE_READ_SUCCESS, accountBalanceInfo).toResponseEntity();
+        } else {
+            return ApiResponse.<AccountBalanceInfoResultDto>error(ErrorStatus.ACCOUNT_BALANCE_READ_FAILED).toResponseEntity();
+        }
     }
 
     /**
      * 계좌 실명 조회 요청 API
      */
     @PostMapping("/account/verify-name")
-    public ApiResponse<AccountOwnerInfoResultDto> readAccountOwner(AccountOwnerReadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<AccountOwnerInfoResultDto>> readAccountOwner(AccountOwnerReadRequestDto requestDto) {
 
         AccountOwnerInfoResultDto accountOwnerInfo = accountServiceImpl.readAccountOwner(requestDto);
 
-        return ApiResponse.onSuccess(accountOwnerInfo);
+        if (accountOwnerInfo != null) {
+            return ApiResponse.success(SuccessStatus.ACCOUNT_OWNER_READ_SUCCESS, accountOwnerInfo).toResponseEntity();
+        } else {
+            return ApiResponse.<AccountOwnerInfoResultDto>error(ErrorStatus.ACCOUNT_OWNER_READ_FAILED).toResponseEntity();
+        }
     }
 
 }

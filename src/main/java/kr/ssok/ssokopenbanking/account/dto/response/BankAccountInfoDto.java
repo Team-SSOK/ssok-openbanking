@@ -1,4 +1,4 @@
-package kr.ssok.ssokopenbanking.global.dto.response;
+package kr.ssok.ssokopenbanking.account.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

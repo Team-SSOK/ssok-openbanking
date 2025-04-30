@@ -1,4 +1,4 @@
-package kr.ssok.ssokopenbanking.global.dto.request;
+package kr.ssok.ssokopenbanking.authentication.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BankAccountReadRequestDto {
-    private String username;
-    private String phoneNumber;
+public class ApiKeyIssueResultDto {
+    private String apiKey;
 }
