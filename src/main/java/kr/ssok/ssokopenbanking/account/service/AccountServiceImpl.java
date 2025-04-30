@@ -1,19 +1,8 @@
 package kr.ssok.ssokopenbanking.account.service;
 
 import kr.ssok.ssokopenbanking.account.client.BankAccountServiceClient;
-import kr.ssok.ssokopenbanking.account.dto.request.AccountBalanceReadRequestDto;
-import kr.ssok.ssokopenbanking.account.dto.request.AccountOwnerReadRequestDto;
-import kr.ssok.ssokopenbanking.account.dto.request.AccountReadRequestDto;
-import kr.ssok.ssokopenbanking.account.dto.response.AccountBalanceInfoResultDto;
-import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoDto;
-import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoListResultDto;
-import kr.ssok.ssokopenbanking.account.dto.response.AccountOwnerInfoResultDto;
-import kr.ssok.ssokopenbanking.account.dto.request.BankAccountBalanceReadRequestDto;
-import kr.ssok.ssokopenbanking.account.dto.request.BankAccountOwnerReadRequestDto;
-import kr.ssok.ssokopenbanking.account.dto.request.BankAccountReadRequestDto;
-import kr.ssok.ssokopenbanking.account.dto.response.BankAccountBalanceInfoDto;
-import kr.ssok.ssokopenbanking.account.dto.response.BankAccountInfoDto;
-import kr.ssok.ssokopenbanking.account.dto.response.BankAccountOwnerInfoDto;
+import kr.ssok.ssokopenbanking.account.dto.request.*;
+import kr.ssok.ssokopenbanking.account.dto.response.*;
 import kr.ssok.ssokopenbanking.global.exception.CustomException;
 import kr.ssok.ssokopenbanking.global.response.code.status.ErrorStatus;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +20,7 @@ public class AccountServiceImpl implements AccountService {
 
     /**
      * 은행별 계좌 조회
+     *
      * @param requestDto (이름, 전화번호)
      * @return 계좌 정보 리스트
      */
@@ -77,6 +67,7 @@ public class AccountServiceImpl implements AccountService {
 
     /**
      * 계좌 잔액 조회
+     *
      * @param requestDto (계좌번호)
      * @return 잔액
      */
@@ -112,6 +103,7 @@ public class AccountServiceImpl implements AccountService {
 
     /**
      * 계좌 실명 조회
+     *
      * @param requestDto (계좌번호)
      * @return 이름
      */
