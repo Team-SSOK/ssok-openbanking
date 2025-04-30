@@ -25,7 +25,8 @@ public class TransferController {
         if (result.getStatus().equals("COMPLETED")) {
             return ApiResponse.success(SuccessStatus.TRANSFER_SUCCESS, result).toResponseEntity();
         } else {
-            return ApiResponse.<TransferResponseDto>error(ErrorStatus.TRANSFER_FAILED).toResponseEntity();
+            // 실패 시에도 결과 객체를 포함하여 반환
+            return ApiResponse.transferError(ErrorStatus.TRANSFER_FAILED, result).toResponseEntity();
         }
     }
 }
