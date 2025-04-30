@@ -1,7 +1,11 @@
 package kr.ssok.ssokopenbanking.transfer.service;
 
 import kr.ssok.ssokopenbanking.global.exception.CustomException;
+import kr.ssok.ssokopenbanking.global.exception.TransferException;
 import kr.ssok.ssokopenbanking.transfer.dto.request.TransferRequestDto;
+import kr.ssok.ssokopenbanking.transfer.dto.request.ValidateAccountRequestDto;
+import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
+import kr.ssok.ssokopenbanking.transfer.dto.request.CheckBalanceRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.response.TransferResponseDto;
 import kr.ssok.ssokopenbanking.transfer.entity.Transaction;
 import kr.ssok.ssokopenbanking.transfer.enums.TransactionStatus;
@@ -12,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+import static kr.ssok.ssokopenbanking.transfer.mapper.TransferMapper.*;
 
 @Service
 @RequiredArgsConstructor
@@ -21,82 +28,134 @@ public class TransferServiceImpl implements TransferService {
     private final BankApiService bankApiService;
     private final TransactionRepository transactionRepository;
 
+    /**
+     * 송금 요청 처리: 계좌 검증 → 잔액 확인 → 출금 → 입금 → 완료
+     */
     @Transactional
     @Override
     public TransferResponseDto processTransfer(TransferRequestDto dto) {
-        // 1. 트랜잭션 생성 및 상태 기록
+        // 1. 트랜잭션 생성 및 초기 상태 저장
         Transaction tx = Transaction.create(dto);
         tx.updateStatus(TransactionStatus.REQUESTED);
         transactionRepository.save(tx);
 
         try {
-            // 2. 유효성 및 휴면 계좌 체크 (CompletableFuture 병렬 처리)
+            // 트랜잭션 ID 문자열 가져오기
+            String txId = tx.getTransactionId().toString();
+
+            // 2. 계좌 유효성 및 휴면 여부 병렬 체크 (출금자, 입금자)
             CompletableFuture<Void> validateSendAccount = CompletableFuture.runAsync(() -> {
-                bankApiService.validateAccount(dto.getSendAccountNumber(), dto.getSendBankCode());
-                bankApiService.checkDormant(dto.getSendAccountNumber(), dto.getSendBankCode());
+                validateAccountAndDormant(txId, dto.getSendName(), dto.getSendAccountNumber());
             });
 
             CompletableFuture<Void> validateRecvAccount = CompletableFuture.runAsync(() -> {
-                bankApiService.validateAccount(dto.getRecvAccountNumber(), dto.getRecvBankCode());
-                bankApiService.checkDormant(dto.getRecvAccountNumber(), dto.getRecvBankCode());
+                validateAccountAndDormant(txId, dto.getRevName(), dto.getRecvAccountNumber());
             });
 
             CompletableFuture.allOf(validateSendAccount, validateRecvAccount).join();
-
             tx.updateStatus(TransactionStatus.VALIDATED);
 
-            // 3. 잔액 체크
-            bankApiService.checkBalance(dto.getSendAccountNumber(), dto.getSendBankCode(), dto.getAmount());
+            // 3. 잔액 확인
+            bankApiService.checkBalance(txId, CheckBalanceRequestDto.builder()
+                    .accountNumber(dto.getSendAccountNumber())
+                    .build());
 
             // 4. 출금 요청
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
-            bankApiService.withdraw(dto);
+            bankApiService.withdraw(txId, toWithdrawRequest(tx));
             tx.updateStatus(TransactionStatus.WITHDRAW_SUCCESS);
 
             // 5. 입금 요청
             tx.updateStatus(TransactionStatus.DEPOSIT_REQUESTED);
-            bankApiService.deposit(dto);
+            bankApiService.deposit(txId, toDepositRequest(tx));
             tx.updateStatus(TransactionStatus.DEPOSIT_SUCCESS);
 
             // 6. 송금 완료
             tx.updateStatus(TransactionStatus.COMPLETED);
-
-            return TransferResponseDto.builder()
-                    .transactionId(tx.getTransactionId().toString())
-                    .status(tx.getStatus().name())
-                    .message("송금이 성공적으로 처리되었습니다.")
-                    .build();
-
-        } catch (CustomException e) {
-            log.error("[송금 실패] 비즈니스 예외 발생 - 사유: {}", e.getMessage());
-            handleFailedTransaction(tx, dto, e);
-
-            return TransferResponseDto.builder()
-                    .transactionId(tx.getTransactionId().toString())
-                    .status(tx.getStatus().name())
-                    .message(e.getMessage()) // CustomException은 메시지 노출 OK
-                    .build();
+            return toResponse(tx, "송금이 성공적으로 처리되었습니다.");
 
         } catch (Exception e) {
-            log.error("[송금 실패] 시스템 예외 발생 - 사유: {}", e.getMessage(), e);
-            handleFailedTransaction(tx, dto, e);
-
-            return TransferResponseDto.builder()
-                    .transactionId(tx.getTransactionId().toString())
-                    .status(tx.getStatus().name())
-                    .message("송금 처리 중 예상치 못한 오류가 발생했습니다.") // 고정 메시지 사용
-                    .build();
+            // 예외 발생 시 비즈니스 or 시스템 예외로 분기
+            return handleException(e, tx, dto);
         }
     }
 
     /**
-     * 송금 실패 시 보상 처리 및 트랜잭션 상태 업데이트
+     * 계좌 유효성 + 휴면 계좌 여부 검사 (두 검사를 묶어서 수행)
+     */
+    private void validateAccountAndDormant(String transactionId, String name, String accountNumber) {
+        bankApiService.validateAccount(
+                transactionId,
+                ValidateAccountRequestDto.builder()
+                        .username(name)
+                        .account(accountNumber)
+                        .build()
+        );
+
+        bankApiService.checkDormant(
+                transactionId,
+                CheckDormantRequestDto.builder()
+                        .accountNumber(accountNumber)
+                        .build()
+        );
+    }
+
+    /**
+     * CompletionException 래핑 여부에 따라 예외 처리 방식 결정
+     */
+    private TransferResponseDto handleException(Exception e, Transaction tx, TransferRequestDto dto) {
+        Throwable cause = (e instanceof CompletionException) ? e.getCause() : e;
+
+        if (cause instanceof TransferException) {
+            return handleTransferException((TransferException) cause, tx, dto);
+        } else if (cause instanceof CustomException) {
+            return handleBusinessException((CustomException) cause, tx, dto);
+        } else {
+            return handleSystemException(tx, dto, cause);
+        }
+    }
+
+    /**
+     * 송금 관련 예외 처리
+     */
+    private TransferResponseDto handleTransferException(TransferException e, Transaction tx, TransferRequestDto dto) {
+        log.error("[송금 실패] 송금 예외 발생 - 사유: {}", e.getMessage());
+        handleFailedTransaction(tx, dto, e);
+        return toResponse(tx, e.getMessage());
+    }
+
+    /**
+     * 비즈니스 예외 처리 (잔액 부족, 유효하지 않은 계좌 등)
+     */
+    private TransferResponseDto handleBusinessException(CustomException e, Transaction tx, TransferRequestDto dto) {
+        log.error("[송금 실패] 비즈니스 예외 발생 - 사유: {}", e.getMessage());
+        handleFailedTransaction(tx, dto, e);
+        return toResponse(tx, e.getMessage());
+    }
+
+    /**
+     * 시스템 예외 처리 (예: 네트워크, 서버 오류 등)
+     */
+    private TransferResponseDto handleSystemException(Transaction tx, TransferRequestDto dto, Throwable e) {
+        log.error("[송금 실패] 시스템 예외 발생 - 사유: {}", e.getMessage(), e);
+        handleFailedTransaction(tx, dto, new Exception(e));
+        return toResponse(tx, "송금 처리 중 예상치 못한 오류가 발생했습니다.");
+    }
+
+    /**
+     * 실패 시 보상 처리 로직 수행
+     * - 출금만 성공하고 입금 실패한 경우: 보상 입금 요청
      */
     private void handleFailedTransaction(Transaction tx, TransferRequestDto dto, Exception e) {
         if (TransactionStatus.WITHDRAW_SUCCESS.equals(tx.getStatus()) ||
                 TransactionStatus.DEPOSIT_REQUESTED.equals(tx.getStatus())) {
 
-            boolean compensated = bankApiService.compensate(dto);
+            // 복구 입금(보상) 처리
+            boolean compensated = bankApiService.compensate(
+                    tx.getTransactionId().toString(),
+                    toDepositRequest(tx)
+            );
+            
             if (compensated) {
                 tx.updateStatus(TransactionStatus.COMPENSATED);
                 log.info("[보상 성공] 출금 복구 완료 - 계좌: {}", dto.getSendAccountNumber());
@@ -105,6 +164,7 @@ public class TransferServiceImpl implements TransferService {
                 log.error("[보상 실패] 출금 복구 실패 - 계좌: {}", dto.getSendAccountNumber());
             }
         } else {
+            // 출금도 실패한 경우는 단순 실패로 처리
             tx.updateStatus(TransactionStatus.FAILED);
         }
     }

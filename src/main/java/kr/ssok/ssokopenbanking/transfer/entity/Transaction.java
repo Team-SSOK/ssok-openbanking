@@ -23,6 +23,8 @@ public class Transaction {
     private String sendBankCode;
     private String recvBankCode;
     private Long amount;
+    private String sendName;
+    private String revName;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
@@ -41,6 +43,8 @@ public class Transaction {
                 .sendBankCode(dto.getSendBankCode())
                 .recvBankCode(dto.getRecvBankCode())
                 .amount(dto.getAmount())
+                .sendName(dto.getSendName())
+                .revName(dto.getRevName())
                 .status(TransactionStatus.REQUESTED) // REQUESTED 기본
                 .createdAt(now)
                 .updatedAt(now)
