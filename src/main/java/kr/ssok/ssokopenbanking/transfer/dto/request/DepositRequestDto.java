@@ -12,7 +12,7 @@ public class DepositRequestDto {
     private String transactionId;
 
     // 입금 받을 은행 코드
-    private String depositBankCode;
+    private int depositBankCode;
 
     // 입금 받을 계좌 번호
     private String depositAccount;
@@ -21,11 +21,11 @@ public class DepositRequestDto {
     private Long transferAmount;
 
     // 통화 코드
-    private Long currencyCode;
+    private int currencyCode;
 
     // 송금인의 계좌 번호 (반대편 계좌)
     private String counterAccount;
 
     // 송금인의 은행 코드 (반대편 은행)
-    private String counterBankCode;
+    private int counterBankCode;
 }

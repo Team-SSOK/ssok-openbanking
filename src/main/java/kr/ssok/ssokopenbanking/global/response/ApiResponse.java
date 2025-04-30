@@ -1,5 +1,6 @@
 package kr.ssok.ssokopenbanking.global.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -28,6 +29,12 @@ public class ApiResponse<T> {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final T result;
+    
+    // 기본 Boolean getter에 @JsonIgnore 추가
+    @JsonIgnore
+    public boolean isSuccess() {
+        return isSuccess;
+    }
 
     // 성공 응답 생성 - 코드와 결과를 함께 반환
     public static <T> ApiResponse<T> success(ResponseCode code, T result) {

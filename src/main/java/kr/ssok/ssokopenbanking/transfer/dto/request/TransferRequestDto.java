@@ -11,10 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
 public class TransferRequestDto {
+
     private final String sendAccountNumber;
-    private final String sendBankCode;
+    private final int sendBankCode;
     private final String recvAccountNumber;
-    private final String recvBankCode;
+    private final int recvBankCode;
     private final Long amount;
     private final String sendName;
     private final String revName;

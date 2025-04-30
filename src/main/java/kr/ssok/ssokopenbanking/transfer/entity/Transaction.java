@@ -20,8 +20,8 @@ public class Transaction {
 
     private String sendAccount;
     private String recvAccount;
-    private String sendBankCode;
-    private String recvBankCode;
+    private int sendBankCode;
+    private int recvBankCode;
     private Long amount;
     private String sendName;
     private String revName;

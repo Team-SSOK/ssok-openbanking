@@ -66,7 +66,7 @@ public class BankApiService {
                           
                 throw new TransferException(
                         ErrorStatus.BAD_REQUEST, 
-                        "계좌 조회 실패: " + requestDto.getAccountNumber(), 
+                        "계좌 조회 실패: " + requestDto.getAccountNumber(),
                         transactionId
                 );
             }
@@ -80,7 +80,7 @@ public class BankApiService {
                 
                 throw new TransferException(
                         ErrorStatus.ACCOUNT_DORMANT, 
-                        "휴면 계좌입니다: " + requestDto.getAccountNumber(), 
+                        "휴면 계좌입니다: " + requestDto.getAccountNumber(),
                         transactionId
                 );
             }
@@ -109,39 +109,62 @@ public class BankApiService {
 
             // 조회 실패
             if (!res.isSuccess()) {
-                log.error("[잔액 조회 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}", 
-                          transactionId, requestDto.getAccountNumber(), res.getCode(), res.getMessage());
-                          
+                log.error("[잔액 조회 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
+
                 throw new TransferException(
-                        ErrorStatus.BAD_REQUEST, 
-                        "잔액 조회 실패: " + requestDto.getAccountNumber(), 
+                        ErrorStatus.BAD_REQUEST,
+                        "잔액 조회 실패: " + requestDto.getAccount(),
                         transactionId
                 );
             }
 
             Map<String, Object> resultMap = res.getResult();
-            Boolean transferable = (Boolean) resultMap.get("transferable");
+            System.out.println(resultMap + "1");
 
-            // 잔액 부족
-            if (!Boolean.TRUE.equals(transferable)) {
-                log.warn("[잔액 부족] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccountNumber());
-                
+            Object balanceObj = resultMap.get("balance");
+            long balance = 0;
+
+            // 숫자인 경우만 처리 (Integer, Long 등)
+            if (balanceObj instanceof Number) {
+                balance = ((Number) balanceObj).longValue();
+            } else {
+                log.error("[잔액 정보 오류] trxId: {}, 계좌번호: {}, balance 타입: {}",
+                        transactionId, requestDto.getAccount(), balanceObj != null ? balanceObj.getClass() : "null");
+
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_INSUFFICIENT_BALANCE,
-                        "잔액이 부족합니다: " + requestDto.getAccountNumber(),
+                        ErrorStatus.BAD_REQUEST,
+                        "잔액 정보가 올바르지 않습니다: " + requestDto.getAccount(),
                         transactionId
                 );
             }
-            
-            log.info("[잔액 확인 성공] trxId: {}, 계좌번호: {}, 송금가능상태: true", 
-                     transactionId, requestDto.getAccountNumber());
+
+            boolean transferable = balance > 0;
+            System.out.println(transferable + "1");
+
+            // 잔액 부족
+            if (!transferable) {
+                log.warn("[잔액 부족] trxId: {}, 계좌번호: {}, 잔액: {}",
+                        transactionId, requestDto.getAccount(), balance);
+
+                throw new TransferException(
+                        ErrorStatus.ACCOUNT_INSUFFICIENT_BALANCE,
+                        "잔액이 부족합니다: " + requestDto.getAccount(),
+                        transactionId
+                );
+            }
+
+            log.info("[잔액 확인 성공] trxId: {}, 계좌번호: {}, 잔액: {}",
+                    transactionId, requestDto.getAccount(), balance);
+
         } catch (Exception e) {
             if (e instanceof TransferException) {
                 throw e;
             }
-            log.error("[잔액 확인 오류] trxId: {}, 계좌번호: {}, 오류: {}", 
-                      transactionId, requestDto.getAccountNumber(), e.getMessage(), e);
-                      
+
+            log.error("[잔액 확인 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccount(), e.getMessage(), e);
+
             throw new TransferException(
                     ErrorStatus.BAD_REQUEST,
                     "잔액 확인 중 오류가 발생했습니다: " + e.getMessage(),
@@ -149,6 +172,7 @@ public class BankApiService {
             );
         }
     }
+
 
     // 출금 요청
     public void withdraw(String transactionId, WithdrawRequestDto requestDto) {
