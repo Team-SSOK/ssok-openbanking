@@ -2,6 +2,7 @@ package kr.ssok.ssokopenbanking.global.exception;
 
 import kr.ssok.ssokopenbanking.global.response.ApiResponse;
 import kr.ssok.ssokopenbanking.global.response.code.status.ErrorStatus;
+import kr.ssok.ssokopenbanking.transfer.dto.response.TransferResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,15 +15,32 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // 커스텀 예외 처리
-    @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException ex) {
-        log.error("CustomException 발생 - code: {}, message: {}", ex.getErrorCode().getReason().getCode(), ex.getMessage());
-
-        // 클라이언트 응답은 "송금 처리 중 오류"로 통일
-        return ApiResponse.error(ErrorStatus.TRANSFER_FAILED).toResponseEntity();
+    // 송금 관련 예외 처리
+    @ExceptionHandler(TransferException.class)
+    public ResponseEntity<ApiResponse<TransferResponseDto>> handleTransferException(TransferException ex) {
+        log.error("[TransferException] transactionId: {}, code: {}, message: {}", 
+                  ex.getTransactionId(), 
+                  ex.getErrorCode().getReason().getCode(), 
+                  ex.getMessage());
+        
+        HttpStatus status = ex.getHttpStatus() != null ? ex.getHttpStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+        ApiResponse<TransferResponseDto> response = ApiResponse.transferError(ex);
+        return new ResponseEntity<>(response, status);
     }
 
+    // 일반 커스텀 예외 처리
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException ex) {
+        log.error("[CustomException] code: {}, message: {}", 
+                  ex.getErrorCode() != null ? ex.getErrorCode().getReason().getCode() : "UNKNOWN", 
+                  ex.getMessage());
+        
+        HttpStatus status = ex.getHttpStatus() != null ? ex.getHttpStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+        ApiResponse<Object> response = ApiResponse.error(ex);
+        return new ResponseEntity<>(response, status);
+    }
+
+    /*
     // 유효성 검증 실패 예외 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
@@ -34,6 +52,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ApiResponse.error(ErrorStatus.VALIDATION_ERROR, errorMessage)
                 .toResponseEntity(HttpStatus.BAD_REQUEST);
     }
+    */
 
     // IllegalArgumentException 처리
     @ExceptionHandler(IllegalArgumentException.class)

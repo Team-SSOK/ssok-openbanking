@@ -42,7 +42,7 @@ public class AccountController {
     /**
      * 계좌 잔액 조회 요청 API
      */
-    @GetMapping("/account/balance")
+    @PostMapping("/account/balance")
     public ResponseEntity<ApiResponse<AccountBalanceInfoResultDto>> readBalance(AccountBalanceReadRequestDto requestDto) {
 
         AccountBalanceInfoResultDto accountBalanceInfo = accountServiceImpl.readAccountBalance(requestDto);
