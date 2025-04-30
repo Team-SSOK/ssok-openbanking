@@ -35,7 +35,7 @@ public class AccountServiceImpl implements AccountService {
      * @return 계좌 정보 리스트
      */
     @Override
-    public AccountInfoListResultDto readAllAccounts(AccountReadRequestDto requestDto) {
+    public List<AccountInfoDto> readAllAccounts(AccountReadRequestDto requestDto) {
 
         // 요청
         BankAccountReadRequestDto bankRequestDto = BankAccountReadRequestDto.builder()
@@ -59,10 +59,12 @@ public class AccountServiceImpl implements AccountService {
                             .accountTypeCode(account.getAccountTypeCode())
                             .build())
                     .toList();
+            /*
             AccountInfoListResultDto resultDto = AccountInfoListResultDto.builder()
                     .accounts(accounts)
                     .build();
-            return resultDto;
+             */
+            return accounts;
         } catch (CustomException e) {
             log.error("[계좌 목록 조회 실패] 비즈니스 예외 발생 - 사유: {}", e.getMessage());
             return null;
