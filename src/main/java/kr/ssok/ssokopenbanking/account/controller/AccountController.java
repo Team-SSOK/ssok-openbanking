@@ -4,6 +4,7 @@ import kr.ssok.ssokopenbanking.account.dto.request.AccountBalanceReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.request.AccountOwnerReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.request.AccountReadRequestDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountBalanceInfoResultDto;
+import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountInfoListResultDto;
 import kr.ssok.ssokopenbanking.account.dto.response.AccountOwnerInfoResultDto;
 import kr.ssok.ssokopenbanking.account.service.AccountServiceImpl;
@@ -12,10 +13,9 @@ import kr.ssok.ssokopenbanking.global.response.code.status.ErrorStatus;
 import kr.ssok.ssokopenbanking.global.response.code.status.SuccessStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,14 +28,14 @@ public class AccountController {
      * 은행별 계좌 조회 요청 API
      */
     @PostMapping("/accounts/request")
-    public ResponseEntity<ApiResponse<AccountInfoListResultDto>> readAllAccounts(AccountReadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<List<AccountInfoDto>>> readAllAccounts(@RequestBody AccountReadRequestDto requestDto) {
 
-        AccountInfoListResultDto accountInfos = accountServiceImpl.readAllAccounts(requestDto);
+        List<AccountInfoDto> accountInfos = accountServiceImpl.readAllAccounts(requestDto);
 
         if (accountInfos != null) {
             return ApiResponse.success(SuccessStatus.ACCOUNT_READ_SUCCESS, accountInfos).toResponseEntity();
         } else {
-            return ApiResponse.<AccountInfoListResultDto>error(ErrorStatus.ACCOUNT_READ_FAILED).toResponseEntity();
+            return ApiResponse.<List<AccountInfoDto>>error(ErrorStatus.ACCOUNT_READ_FAILED).toResponseEntity();
         }
     }
 
@@ -43,7 +43,7 @@ public class AccountController {
      * 계좌 잔액 조회 요청 API
      */
     @PostMapping("/account/balance")
-    public ResponseEntity<ApiResponse<AccountBalanceInfoResultDto>> readBalance(AccountBalanceReadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<AccountBalanceInfoResultDto>> readBalance(@RequestBody AccountBalanceReadRequestDto requestDto) {
 
         AccountBalanceInfoResultDto accountBalanceInfo = accountServiceImpl.readAccountBalance(requestDto);
 
@@ -58,7 +58,7 @@ public class AccountController {
      * 계좌 실명 조회 요청 API
      */
     @PostMapping("/account/verify-name")
-    public ResponseEntity<ApiResponse<AccountOwnerInfoResultDto>> readAccountOwner(AccountOwnerReadRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<AccountOwnerInfoResultDto>> readAccountOwner(@RequestBody AccountOwnerReadRequestDto requestDto) {
 
         AccountOwnerInfoResultDto accountOwnerInfo = accountServiceImpl.readAccountOwner(requestDto);
 

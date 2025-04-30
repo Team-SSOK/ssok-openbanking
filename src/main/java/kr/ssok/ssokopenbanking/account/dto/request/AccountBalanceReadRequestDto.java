@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AccountBalanceReadRequestDto {
     private String accountNumber;
-    private String bankCode;
+    private int bankCode;
 }
