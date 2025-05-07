@@ -18,6 +18,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * 카프카 컨피그 (클라이언트)
@@ -48,7 +49,7 @@ public class KafkaConfig {
     @Bean
     public NewTopic replyTopic() {
         return TopicBuilder.name(replyTopic)
-                .partitions(3)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
@@ -97,11 +98,15 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory());
 
         ConcurrentMessageListenerContainer<String, Object> replyContainer =
-                factory.createContainer(replyTopic);
+                factory.createContainer(replyTopic+"-"+clientId);
+
+        //각각의 reply topic마다 동일한 group ID를 사용하는 것은 괜찮음
         replyContainer.getContainerProperties().setGroupId("reply-client-group");
         replyContainer.setAutoStartup(false);
 
         return new ReplyingKafkaTemplate<>(pf, replyContainer);
     }
+
+    private static final String clientId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
 }
