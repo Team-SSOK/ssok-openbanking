@@ -3,6 +3,7 @@ package kr.ssok.ssokopenbanking.transfer.service;
 import kr.ssok.ssokopenbanking.global.comm.KafkaCommModule;
 import kr.ssok.ssokopenbanking.global.exception.CustomException;
 import kr.ssok.ssokopenbanking.global.exception.TransferException;
+
 import kr.ssok.ssokopenbanking.transfer.dto.request.TransferRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.ValidateAccountRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
@@ -77,8 +78,19 @@ public class TransferServiceImpl implements TransferService {
             return toResponse(tx, "송금이 성공적으로 처리되었습니다.");
 
         } catch (Exception e) {
+            Throwable cause = (e instanceof CompletionException) ? e.getCause() : e;
+
+            // 상태 업데이트 및 보상 처리
+            handleFailedTransaction(tx, dto, cause instanceof Exception ? (Exception) cause : new Exception(cause));
+
+            // 예외는 그대로 → GlobalExceptionHandler 처리
+            if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+            throw new RuntimeException(cause);
+
+            /*
             // 예외 발생 시 비즈니스 or 시스템 예외로 분기
             return handleException(e, tx, dto);
+            */
         }
     }
 
@@ -103,48 +115,6 @@ public class TransferServiceImpl implements TransferService {
     }
 
     /**
-     * CompletionException 래핑 여부에 따라 예외 처리 방식 결정
-     */
-    private TransferResponseDto handleException(Exception e, Transaction tx, TransferRequestDto dto) {
-        Throwable cause = (e instanceof CompletionException) ? e.getCause() : e;
-
-        if (cause instanceof TransferException) {
-            return handleTransferException((TransferException) cause, tx, dto);
-        } else if (cause instanceof CustomException) {
-            return handleBusinessException((CustomException) cause, tx, dto);
-        } else {
-            return handleSystemException(tx, dto, cause);
-        }
-    }
-
-    /**
-     * 송금 관련 예외 처리
-     */
-    private TransferResponseDto handleTransferException(TransferException e, Transaction tx, TransferRequestDto dto) {
-        log.error("[송금 실패] 송금 예외 발생 - 사유: {}", e.getMessage());
-        handleFailedTransaction(tx, dto, e);
-        return toResponse(tx, e.getMessage());
-    }
-
-    /**
-     * 비즈니스 예외 처리 (잔액 부족, 유효하지 않은 계좌 등)
-     */
-    private TransferResponseDto handleBusinessException(CustomException e, Transaction tx, TransferRequestDto dto) {
-        log.error("[송금 실패] 비즈니스 예외 발생 - 사유: {}", e.getMessage());
-        handleFailedTransaction(tx, dto, e);
-        return toResponse(tx, e.getMessage());
-    }
-
-    /**
-     * 시스템 예외 처리 (예: 네트워크, 서버 오류 등)
-     */
-    private TransferResponseDto handleSystemException(Transaction tx, TransferRequestDto dto, Throwable e) {
-        log.error("[송금 실패] 시스템 예외 발생 - 사유: {}", e.getMessage(), e);
-        handleFailedTransaction(tx, dto, new Exception(e));
-        return toResponse(tx, "송금 처리 중 예상치 못한 오류가 발생했습니다.");
-    }
-
-    /**
      * 실패 시 보상 처리 로직 수행
      * - 출금만 성공하고 입금 실패한 경우: 보상 입금 요청
      */
@@ -152,12 +122,16 @@ public class TransferServiceImpl implements TransferService {
         if (TransactionStatus.WITHDRAW_SUCCESS.equals(tx.getStatus()) ||
                 TransactionStatus.DEPOSIT_REQUESTED.equals(tx.getStatus())) {
 
+            System.out.println("11111");
+
             // 복구 입금(보상) 처리
             boolean compensated = bankApiService.compensate(
                     tx.getTransactionId().toString(),
                     toDepositRequest(tx)
             );
-            
+
+            System.out.println(compensated + " TransferServiceImpl");
+
             if (compensated) {
                 tx.updateStatus(TransactionStatus.COMPENSATED);
                 log.info("[보상 성공] 출금 복구 완료 - 계좌: {}", dto.getSendAccountNumber());
