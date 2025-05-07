@@ -18,15 +18,10 @@ public class TransferController {
 
     private final TransferService transferService;
 
+
     @PostMapping
     public ResponseEntity<ApiResponse<TransferResponseDto>> transfer(@RequestBody TransferRequestDto dto) {
         TransferResponseDto result = transferService.processTransfer(dto);
-
-        if (result.getStatus().equals("COMPLETED")) {
-            return ApiResponse.success(SuccessStatus.TRANSFER_SUCCESS, result).toResponseEntity();
-        } else {
-            // 실패 시에도 결과 객체를 포함하여 반환
-            return ApiResponse.transferError(ErrorStatus.TRANSFER_FAILED, result).toResponseEntity();
-        }
+        return ApiResponse.success(SuccessStatus.TRANSFER_SUCCESS, result).toResponseEntity();
     }
 }
