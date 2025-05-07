@@ -1,5 +1,9 @@
 package kr.ssok.ssokopenbanking.transfer.service;
 
+import kr.ssok.ssokopenbanking.global.comm.KafkaCommModule;
+import kr.ssok.ssokopenbanking.global.exception.CustomException;
+import kr.ssok.ssokopenbanking.global.exception.TransferException;
+
 import kr.ssok.ssokopenbanking.transfer.dto.request.TransferRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.ValidateAccountRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
@@ -25,6 +29,7 @@ public class TransferServiceImpl implements TransferService {
 
     private final BankApiService bankApiService;
     private final TransactionRepository transactionRepository;
+    private final KafkaCommModule commModule;
 
     /**
      * 송금 요청 처리: 계좌 검증 → 잔액 확인 → 출금 → 입금 → 완료
