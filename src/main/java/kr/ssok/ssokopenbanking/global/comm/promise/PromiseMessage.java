@@ -1,5 +1,6 @@
 package kr.ssok.ssokopenbanking.global.comm.promise;
 
+import kr.ssok.ssokopenbanking.global.comm.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 
@@ -12,23 +13,13 @@ public class PromiseMessage {
 
     private final ConsumerRecord<String, Object> response;
 
-    public <R> R getDataObject(Class<R> responseType) {
+    public <T> T getDataObject(Class<T> responseType) {
         Object value = response.value();
 
-        if (value == null) return null;
+        if (value == null || !(value instanceof String))
+            throw new RuntimeException("[PromiseMessage] JSON 파싱 실패");
 
-        try
-        {
-            return responseType.cast(value);
-        }
-        catch (ClassCastException e)
-        {
-            throw new ClassCastException(String.format(
-                    "응답 값을 %s 타입으로 변환할 수 없습니다. 실제 타입: %s",
-                    responseType.getName(),
-                    value.getClass().getName()
-            ));
-        }
+        return JsonUtil.fromJson((String) value, responseType);
     }
 
 }
