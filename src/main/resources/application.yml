@@ -19,8 +19,8 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: kudong.kr
+      port: 55032
 
   datasource:
     username: lgcns
