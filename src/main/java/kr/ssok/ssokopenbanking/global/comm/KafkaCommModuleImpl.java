@@ -51,7 +51,7 @@ public class KafkaCommModuleImpl implements KafkaCommModule {
     @Override
     public CommQueryPromise sendPromiseQuery(String key, String cmd, Object request, int timeout) {
         ProducerRecord<String, Object> record =
-                new ProducerRecord<>(requestTopic, key, request);
+                new ProducerRecord<>(requestTopic, key , request instanceof String ? request : JsonUtil.toJson(request));
         record.headers().add("CMD", cmd.getBytes(StandardCharsets.UTF_8));
 
         log.info("Sending Promise Request: {}", request);
@@ -76,7 +76,7 @@ public class KafkaCommModuleImpl implements KafkaCommModule {
     @Override
     public Message sendMessage(String key, String cmd, Object request, BiConsumer<? super SendResult<String, Object>, ? super Throwable> callback) {
         ProducerRecord<String, Object> record =
-                new ProducerRecord<>(pushTopic, key, request);
+                new ProducerRecord<>(pushTopic, key, request instanceof String ? request : JsonUtil.toJson(request));
         record.headers().add("CMD", cmd.getBytes(StandardCharsets.UTF_8));
 
         CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(record);
