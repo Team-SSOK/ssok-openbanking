@@ -14,6 +14,7 @@ import kr.ssok.ssokopenbanking.transfer.enums.TransactionStatus;
 import kr.ssok.ssokopenbanking.transfer.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import static kr.ssok.ssokopenbanking.transfer.mapper.TransferMapper.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("default")
 public class TransferServiceImpl implements TransferService {
 
     private final BankApiService bankApiService;

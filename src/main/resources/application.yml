@@ -1,6 +1,8 @@
 spring:
   application:
     name: ssok-openbanking
+  profiles:
+    active: kafka
 
   kafka:
     bootstrap-servers: localhost:9092
