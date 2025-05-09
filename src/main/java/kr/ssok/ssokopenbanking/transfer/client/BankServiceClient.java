@@ -3,10 +3,8 @@ package kr.ssok.ssokopenbanking.transfer.client;
 import kr.ssok.ssokopenbanking.transfer.dto.request.*;
 import kr.ssok.ssokopenbanking.transfer.dto.response.BankApiResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 
@@ -27,6 +25,10 @@ public interface BankServiceClient {
     // 계좌 잔액 조회
     @PostMapping("/api/bank/account/balance")
     BankApiResponseDto<Map<String, Object>> checkBalance(@RequestBody CheckBalanceRequestDto requestDto);
+
+    // 송금 한도 검사
+    @PostMapping("api/bank/account/transferable")
+    BankApiResponseDto<Map<String, Object>> checkTransferable(@RequestBody CheckTransferableRequestDto requestDto);
 
     // 출금 이체
     @PostMapping("/api/bank/transfer/withdraw")

@@ -1,9 +1,8 @@
 package kr.ssok.ssokopenbanking.transfer.service;
 
-import kr.ssok.ssokopenbanking.transfer.client.BankServiceClient;
-import kr.ssok.ssokopenbanking.global.exception.CustomException;
 import kr.ssok.ssokopenbanking.global.exception.TransferException;
 import kr.ssok.ssokopenbanking.global.response.code.status.ErrorStatus;
+import kr.ssok.ssokopenbanking.transfer.client.BankServiceClient;
 import kr.ssok.ssokopenbanking.transfer.dto.request.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,7 @@ public class BankApiService {
                           transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
                           
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_NOT_FOUND, 
+                        ErrorStatus.ACCOUNT_NOT_FOUND,
                         "유효하지 않은 계좌입니다: " + requestDto.getAccount(), 
                         transactionId
                 );
@@ -168,6 +167,55 @@ public class BankApiService {
             throw new TransferException(
                     ErrorStatus.BAD_REQUEST,
                     "잔액 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                    transactionId
+            );
+        }
+    }
+
+    // 송금 가능 여부 검사
+    public void checkTransferable(String transactionId, CheckTransferableRequestDto requestDto) {
+        try {
+            var res = bankClient.checkTransferable(requestDto);
+
+            // API 응답 자체 실패
+            if (!res.isSuccess()) {
+                log.error("[송금 가능 여부 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
+
+                throw new TransferException(
+                        ErrorStatus.TRANSFER_NOT_ALLOWED,
+                        "송금 가능 여부 확인 실패: " + requestDto.getAccount(),
+                        transactionId
+                );
+            }
+
+            Map<String, Object> resultMap = res.getResult();
+            Boolean transferable = (Boolean) resultMap.get("transferable");
+
+            // transferable false 또는 null 일 때
+            if (Boolean.FALSE.equals(transferable)) {
+                log.warn("[송금 불가] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccount());
+
+                throw new TransferException(
+                        ErrorStatus.TRANSFER_NOT_ALLOWED,
+                        "잔액 또는 출금 한도로 인해 송금이 불가능합니다: " + requestDto.getAccount(),
+                        transactionId
+                );
+            }
+
+            log.info("[송금 가능 확인 성공] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccount());
+
+        } catch (Exception e) {
+            if (e instanceof TransferException) {
+                throw e;
+            }
+            // 그 외 예외처리
+            log.error("[송금 가능 여부 검사 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccount(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.TRANSFER_NOT_ALLOWED,
+                    "송금 가능 여부 확인 중 오류가 발생했습니다: " + e.getMessage(),
                     transactionId
             );
         }
