@@ -17,7 +17,7 @@ public class TransferMapper {
                 .withdrawBankCode(tx.getSendBankCode())
                 .withdrawAccount(tx.getSendAccount())
                 .transferAmount(tx.getAmount())
-                .currencyCode(1)
+                .currencyCode(0)
                 .counterAccount(tx.getRecvAccount())
                 .counterBankCode(tx.getRecvBankCode())
                 .build();
@@ -30,7 +30,7 @@ public class TransferMapper {
                 .depositBankCode(tx.getRecvBankCode())
                 .depositAccount(tx.getRecvAccount())
                 .transferAmount(tx.getAmount())
-                .currencyCode(1)
+                .currencyCode(0)
                 .counterAccount(tx.getSendAccount())
                 .counterBankCode(tx.getSendBankCode())
                 .build();
