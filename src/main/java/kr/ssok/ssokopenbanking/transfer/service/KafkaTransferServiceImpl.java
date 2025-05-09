@@ -51,7 +51,7 @@ public class KafkaTransferServiceImpl implements TransferService {
             CompletableFuture.allOf(validateSend, validateRecv).join();
             tx.updateStatus(TransactionStatus.VALIDATED);
 
-            // 잔액 확인 (기존 REST API)
+            // 잔액 확인
             bankApiService.checkBalance(txId, CheckBalanceRequestDto.builder()
                     .account(dto.getSendAccountNumber())
                     .build());
@@ -67,6 +67,11 @@ public class KafkaTransferServiceImpl implements TransferService {
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
             commModule.sendPromiseQuery(CommunicationProtocol.REQUEST_WITHDRAW, TransferMapper.toWithdrawRequest(tx)).get();
             tx.updateStatus(TransactionStatus.WITHDRAW_SUCCESS);
+
+            boolean isFailed = true;
+
+            if(isFailed)
+                throw new Exception();
 
             // 입금 요청 (Kafka)
             tx.updateStatus(TransactionStatus.DEPOSIT_REQUESTED);
