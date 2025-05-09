@@ -65,17 +65,12 @@ public class KafkaTransferServiceImpl implements TransferService {
 
             // 출금 요청 (Kafka)
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
-            commModule.sendPromiseQuery(CommunicationProtocol.REQUEST_WITHDRAW, TransferMapper.toWithdrawRequest(tx)).get();
+            commModule.sendPromiseQuery(dto.getSendAccountNumber(),CommunicationProtocol.REQUEST_WITHDRAW, TransferMapper.toWithdrawRequest(tx),10).get();
             tx.updateStatus(TransactionStatus.WITHDRAW_SUCCESS);
-
-            boolean isFailed = true;
-
-            if(isFailed)
-                throw new Exception();
 
             // 입금 요청 (Kafka)
             tx.updateStatus(TransactionStatus.DEPOSIT_REQUESTED);
-            commModule.sendPromiseQuery(CommunicationProtocol.REQUEST_DEPOSIT, TransferMapper.toDepositRequest(tx)).get();
+            commModule.sendPromiseQuery(dto.getRecvAccountNumber(),CommunicationProtocol.REQUEST_DEPOSIT, TransferMapper.toDepositRequest(tx),10).get();
             tx.updateStatus(TransactionStatus.DEPOSIT_SUCCESS);
 
             tx.updateStatus(TransactionStatus.COMPLETED);

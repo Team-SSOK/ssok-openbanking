@@ -72,12 +72,6 @@ public class TransferServiceImpl implements TransferService {
             bankApiService.withdraw(txId, TransferMapper.toWithdrawRequest(tx));
             tx.updateStatus(TransactionStatus.WITHDRAW_SUCCESS);
 
-            boolean isFailed = true;
-
-            if(isFailed)
-                throw new Exception();
-
-
             // 5. 입금 요청
             tx.updateStatus(TransactionStatus.DEPOSIT_REQUESTED);
             bankApiService.deposit(txId, TransferMapper.toDepositRequest(tx));
