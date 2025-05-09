@@ -56,6 +56,13 @@ public class KafkaTransferServiceImpl implements TransferService {
                     .account(dto.getSendAccountNumber())
                     .build());
 
+            // 3.5. 송금 가능 여부 확인 (출금 한도)
+            bankApiService.checkTransferable(txId, CheckTransferableRequestDto.builder()
+                    .username(dto.getSendName())
+                    .account(dto.getSendAccountNumber())
+                    .transferAmount(dto.getAmount())
+                    .build());
+
             // 출금 요청 (Kafka)
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
             commModule.sendPromiseQuery(CommunicationProtocol.REQUEST_WITHDRAW, TransferMapper.toWithdrawRequest(tx)).get();
@@ -76,6 +83,9 @@ public class KafkaTransferServiceImpl implements TransferService {
         }
     }
 
+    /**
+     * 계좌 유효성 + 휴면 계좌 여부 검사 (두 검사를 묶어서 수행)
+     */
     private void validateAccountAndDormant(String transactionId, String name, String accountNumber) {
         bankApiService.validateAccount(
                 transactionId,

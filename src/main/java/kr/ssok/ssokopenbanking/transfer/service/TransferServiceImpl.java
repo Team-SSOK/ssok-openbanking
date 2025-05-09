@@ -2,10 +2,7 @@ package kr.ssok.ssokopenbanking.transfer.service;
 
 
 import kr.ssok.ssokopenbanking.global.comm.KafkaCommModule;
-import kr.ssok.ssokopenbanking.transfer.dto.request.CheckBalanceRequestDto;
-import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
-import kr.ssok.ssokopenbanking.transfer.dto.request.TransferRequestDto;
-import kr.ssok.ssokopenbanking.transfer.dto.request.ValidateAccountRequestDto;
+import kr.ssok.ssokopenbanking.transfer.dto.request.*;
 import kr.ssok.ssokopenbanking.transfer.dto.response.TransferResponseDto;
 import kr.ssok.ssokopenbanking.transfer.entity.Transaction;
 import kr.ssok.ssokopenbanking.transfer.enums.TransactionStatus;
@@ -61,6 +58,13 @@ public class TransferServiceImpl implements TransferService {
             // 3. 잔액 확인
             bankApiService.checkBalance(txId, CheckBalanceRequestDto.builder()
                     .account(dto.getSendAccountNumber())
+                    .build());
+
+            // 3.5. 송금 가능 여부 확인 (출금 한도)
+            bankApiService.checkTransferable(txId, CheckTransferableRequestDto.builder()
+                    .username(dto.getSendName())
+                    .account(dto.getSendAccountNumber())
+                    .transferAmount(dto.getAmount())
                     .build());
 
             // 4. 출금 요청
