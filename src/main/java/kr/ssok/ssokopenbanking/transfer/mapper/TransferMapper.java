@@ -1,5 +1,7 @@
 package kr.ssok.ssokopenbanking.transfer.mapper;
 
+
+import kr.ssok.ssokopenbanking.transfer.dto.request.CompensateRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.DepositRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.WithdrawRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.response.TransferResponseDto;
@@ -40,6 +42,13 @@ public class TransferMapper {
                 .transactionId(tx.getTransactionId().toString())
                 .status(tx.getStatus().name())
                 .message(message)
+                .build();
+    }
+
+    // 보상 요청용 DTO 매핑
+    public static CompensateRequestDto toCompensateRequest(Transaction tx) {
+        return CompensateRequestDto.builder()
+                .transactionId(tx.getTransactionId().toString())
                 .build();
     }
 }
