@@ -1,5 +1,6 @@
 package kr.ssok.ssokopenbanking.transfer.service;
 
+
 import kr.ssok.ssokopenbanking.global.comm.KafkaCommModule;
 import kr.ssok.ssokopenbanking.transfer.dto.request.CheckBalanceRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
@@ -8,12 +9,14 @@ import kr.ssok.ssokopenbanking.transfer.dto.request.ValidateAccountRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.response.TransferResponseDto;
 import kr.ssok.ssokopenbanking.transfer.entity.Transaction;
 import kr.ssok.ssokopenbanking.transfer.enums.TransactionStatus;
+import kr.ssok.ssokopenbanking.transfer.mapper.TransferMapper;
 import kr.ssok.ssokopenbanking.transfer.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import jakarta.transaction.Transactional;
+
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
