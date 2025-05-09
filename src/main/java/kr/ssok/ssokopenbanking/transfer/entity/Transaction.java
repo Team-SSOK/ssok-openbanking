@@ -7,7 +7,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,7 +23,7 @@ public class Transaction {
     private int recvBankCode;
     private Long amount;
     private String sendName;
-    private String revName;
+    private String recvName;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
@@ -44,7 +43,7 @@ public class Transaction {
                 .recvBankCode(dto.getRecvBankCode())
                 .amount(dto.getAmount())
                 .sendName(dto.getSendName())
-                .revName(dto.getRevName())
+                .recvName(dto.getRecvName())
                 .status(TransactionStatus.REQUESTED) // REQUESTED 기본
                 .createdAt(now)
                 .updatedAt(now)

@@ -1,13 +1,10 @@
 package kr.ssok.ssokopenbanking.transfer.service;
 
 import kr.ssok.ssokopenbanking.global.comm.KafkaCommModule;
-import kr.ssok.ssokopenbanking.global.exception.CustomException;
-import kr.ssok.ssokopenbanking.global.exception.TransferException;
-
+import kr.ssok.ssokopenbanking.transfer.dto.request.CheckBalanceRequestDto;
+import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.TransferRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.ValidateAccountRequestDto;
-import kr.ssok.ssokopenbanking.transfer.dto.request.CheckDormantRequestDto;
-import kr.ssok.ssokopenbanking.transfer.dto.request.CheckBalanceRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.response.TransferResponseDto;
 import kr.ssok.ssokopenbanking.transfer.entity.Transaction;
 import kr.ssok.ssokopenbanking.transfer.enums.TransactionStatus;
@@ -20,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-
-import static kr.ssok.ssokopenbanking.transfer.mapper.TransferMapper.*;
 
 @Service
 @RequiredArgsConstructor
@@ -54,7 +49,7 @@ public class TransferServiceImpl implements TransferService {
             });
 
             CompletableFuture<Void> validateRecvAccount = CompletableFuture.runAsync(() -> {
-                validateAccountAndDormant(txId, dto.getRevName(), dto.getRecvAccountNumber());
+                validateAccountAndDormant(txId, dto.getRecvName(), dto.getRecvAccountNumber());
             });
 
             CompletableFuture.allOf(validateSendAccount, validateRecvAccount).join();
@@ -67,17 +62,17 @@ public class TransferServiceImpl implements TransferService {
 
             // 4. 출금 요청
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
-            bankApiService.withdraw(txId, toWithdrawRequest(tx));
+            bankApiService.withdraw(txId, TransferMapper.toWithdrawRequest(tx));
             tx.updateStatus(TransactionStatus.WITHDRAW_SUCCESS);
 
             // 5. 입금 요청
             tx.updateStatus(TransactionStatus.DEPOSIT_REQUESTED);
-            bankApiService.deposit(txId, toDepositRequest(tx));
+            bankApiService.deposit(txId, TransferMapper.toDepositRequest(tx));
             tx.updateStatus(TransactionStatus.DEPOSIT_SUCCESS);
 
             // 6. 송금 완료
             tx.updateStatus(TransactionStatus.COMPLETED);
-            return toResponse(tx, "송금이 성공적으로 처리되었습니다.");
+            return TransferMapper.toResponse(tx, "송금이 성공적으로 처리되었습니다.");
 
         } catch (Exception e) {
             Throwable cause = (e instanceof CompletionException) ? e.getCause() : e;
@@ -124,12 +119,10 @@ public class TransferServiceImpl implements TransferService {
         if (TransactionStatus.WITHDRAW_SUCCESS.equals(tx.getStatus()) ||
                 TransactionStatus.DEPOSIT_REQUESTED.equals(tx.getStatus())) {
 
-            System.out.println("11111");
-
             // 복구 입금(보상) 처리
             boolean compensated = bankApiService.compensate(
                     tx.getTransactionId().toString(),
-                    toDepositRequest(tx)
+                    TransferMapper.toDepositRequest(tx)
             );
 
             System.out.println(compensated + " TransferServiceImpl");

@@ -18,5 +18,5 @@ public class TransferRequestDto {
     private final int recvBankCode;
     private final Long amount;
     private final String sendName;
-    private final String revName;
+    private final String recvName;
 }
