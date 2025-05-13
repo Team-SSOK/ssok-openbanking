@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -31,12 +32,12 @@ public class Transaction {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Transaction 생성 메서드
-    public static Transaction create(TransferRequestDto dto) {
+    // UUID 외부 주입
+    public static Transaction create(TransferRequestDto dto, UUID txId) {
         LocalDateTime now = LocalDateTime.now();
 
         return Transaction.builder()
-                .transactionId(UUID.randomUUID()) // UUID 자동 생성
+                .transactionId(txId)
                 .sendAccount(dto.getSendAccountNumber())
                 .recvAccount(dto.getRecvAccountNumber())
                 .sendBankCode(dto.getSendBankCode())
@@ -44,7 +45,7 @@ public class Transaction {
                 .amount(dto.getAmount())
                 .sendName(dto.getSendName())
                 .recvName(dto.getRecvName())
-                .status(TransactionStatus.REQUESTED) // REQUESTED 기본
+                .status(TransactionStatus.REQUESTED)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

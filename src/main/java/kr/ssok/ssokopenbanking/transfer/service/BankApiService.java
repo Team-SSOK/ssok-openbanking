@@ -1,9 +1,11 @@
 package kr.ssok.ssokopenbanking.transfer.service;
 
+import feign.FeignException;
 import kr.ssok.ssokopenbanking.global.exception.TransferException;
 import kr.ssok.ssokopenbanking.global.response.code.status.ErrorStatus;
 import kr.ssok.ssokopenbanking.transfer.client.BankServiceClient;
 import kr.ssok.ssokopenbanking.transfer.dto.request.*;
+import kr.ssok.ssokopenbanking.transfer.dto.response.BankApiResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,45 +28,60 @@ public class BankApiService {
         try {
             var res = bankClient.validateAccount(requestDto);
 
-            if (!res.isSuccess()) {
-                log.error("[계좌 검증 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}", 
-                          transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
-                          
+            if (isFailedResponse(res)) {
+                log.error("[계좌 검증 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
+
                 throw new TransferException(
                         ErrorStatus.ACCOUNT_NOT_FOUND,
-                        "유효하지 않은 계좌입니다: " + requestDto.getAccount(), 
+                        "유효하지 않은 계좌입니다: " + requestDto.getAccount(),
                         transactionId
                 );
             }
-            
+
             log.info("[계좌 검증 성공] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccount());
-        } catch (Exception e) {
-            if (e instanceof TransferException) {
-                throw e;
-            }
-            log.error("[계좌 검증 오류] trxId: {}, 계좌번호: {}, 오류: {}", 
-                      transactionId, requestDto.getAccount(), e.getMessage(), e);
-                      
+
+        } catch (TransferException e) {
+            throw e;
+
+        } catch (FeignException e) {
+            log.error("[계좌 검증 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccount(), e.getMessage(), e);
+
             throw new TransferException(
-                    ErrorStatus.ACCOUNT_NOT_FOUND,
-                    "계좌 검증 중 오류가 발생했습니다: " + e.getMessage(),
+                    ErrorStatus.BAD_GATEWAY,
+                    "은행 API 호출 실패: " + e.getMessage(),
+                    transactionId
+            );
+
+        } catch (Exception e) {
+            log.error("[계좌 검증 알 수 없는 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccount(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.INTERNAL_SERVER_ERROR,
+                    "계좌 검증 중 예기치 못한 오류가 발생했습니다.",
                     transactionId
             );
         }
     }
+
+    private static boolean isFailedResponse(BankApiResponseDto<Map<String, Object>> res) {
+        return !res.isSuccess();
+    }
+
 
     // 휴면 계좌 여부 확인
     public void checkDormant(String transactionId, CheckDormantRequestDto requestDto) {
         try {
             var res = bankClient.checkDormant(requestDto);
 
-            // 조회 실패
-            if (!res.isSuccess()) {
-                log.error("[휴면계좌 조회 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}", 
-                          transactionId, requestDto.getAccountNumber(), res.getCode(), res.getMessage());
-                          
+            if (isFailedResponse(res)) {
+                log.error("[휴면계좌 조회 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getAccountNumber(), res.getCode(), res.getMessage());
+
                 throw new TransferException(
-                        ErrorStatus.BAD_REQUEST, 
+                        ErrorStatus.ACCOUNT_READ_FAILED,
                         "계좌 조회 실패: " + requestDto.getAccountNumber(),
                         transactionId
                 );
@@ -72,59 +89,68 @@ public class BankApiService {
 
             Map<String, Object> resultMap = res.getResult();
             Boolean isDormant = (Boolean) resultMap.get("isDormant");
+            boolean isDormantAccount = Boolean.TRUE.equals(isDormant);
 
-            // 휴면 계좌
-            if (Boolean.TRUE.equals(isDormant)) {
+            if (isDormantAccount) {
                 log.warn("[휴면계좌 감지] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccountNumber());
-                
+
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_DORMANT, 
+                        ErrorStatus.ACCOUNT_DORMANT,
                         "휴면 계좌입니다: " + requestDto.getAccountNumber(),
                         transactionId
                 );
             }
-            
-            log.info("[휴면계좌 확인 성공] trxId: {}, 계좌번호: {}, 휴면상태: 정상", 
-                     transactionId, requestDto.getAccountNumber());
-        } catch (Exception e) {
-            if (e instanceof TransferException) {
-                throw e;
-            }
-            log.error("[휴면계좌 확인 오류] trxId: {}, 계좌번호: {}, 오류: {}", 
-                      transactionId, requestDto.getAccountNumber(), e.getMessage(), e);
-                      
+
+            log.info("[휴면계좌 확인 성공] trxId: {}, 계좌번호: {}, 휴면상태: 정상",
+                    transactionId, requestDto.getAccountNumber());
+
+        } catch (TransferException e) {
+            throw e;
+
+        } catch (FeignException e) {
+            log.error("[휴면계좌 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccountNumber(), e.getMessage(), e);
+
             throw new TransferException(
-                    ErrorStatus.BAD_REQUEST,
-                    "휴면 계좌 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                    ErrorStatus.BAD_GATEWAY,
+                    "은행 API 호출 실패: " + e.getMessage(),
+                    transactionId
+            );
+
+        } catch (Exception e) {
+            log.error("[휴면계좌 확인 알 수 없는 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccountNumber(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.INTERNAL_SERVER_ERROR,
+                    "휴면 계좌 확인 중 예기치 못한 오류가 발생했습니다.",
                     transactionId
             );
         }
     }
+
 
     // 잔액 확인
     public void checkBalance(String transactionId, CheckBalanceRequestDto requestDto) {
         try {
             var res = bankClient.checkBalance(requestDto);
 
-            // 조회 실패
-            if (!res.isSuccess()) {
+            if (isFailedResponse(res)) {
                 log.error("[잔액 조회 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
                         transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
 
                 throw new TransferException(
-                        ErrorStatus.BAD_REQUEST,
+                        ErrorStatus.ACCOUNT_BALANCE_READ_FAILED,
                         "잔액 조회 실패: " + requestDto.getAccount(),
                         transactionId
                 );
             }
 
             Map<String, Object> resultMap = res.getResult();
-            System.out.println(resultMap + "1");
-
             Object balanceObj = resultMap.get("balance");
-            long balance = 0;
+            long balance;
 
-            // 숫자인 경우만 처리 (Integer, Long 등)
+            // 숫자인 경우만 처리
             if (balanceObj instanceof Number) {
                 balance = ((Number) balanceObj).longValue();
             } else {
@@ -132,17 +158,13 @@ public class BankApiService {
                         transactionId, requestDto.getAccount(), balanceObj != null ? balanceObj.getClass() : "null");
 
                 throw new TransferException(
-                        ErrorStatus.BAD_REQUEST,
+                        ErrorStatus.INTERNAL_SERVER_ERROR,
                         "잔액 정보가 올바르지 않습니다: " + requestDto.getAccount(),
                         transactionId
                 );
             }
 
-            boolean transferable = balance > 0;
-            System.out.println(transferable + "1");
-
-            // 잔액 부족
-            if (!transferable) {
+            if (balance <= 0) {
                 log.warn("[잔액 부족] trxId: {}, 계좌번호: {}, 잔액: {}",
                         transactionId, requestDto.getAccount(), balance);
 
@@ -156,29 +178,38 @@ public class BankApiService {
             log.info("[잔액 확인 성공] trxId: {}, 계좌번호: {}, 잔액: {}",
                     transactionId, requestDto.getAccount(), balance);
 
-        } catch (Exception e) {
-            if (e instanceof TransferException) {
-                throw e;
-            }
+        } catch (TransferException e) {
+            throw e;
 
-            log.error("[잔액 확인 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+        } catch (FeignException e) {
+            log.error("[잔액 조회 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
                     transactionId, requestDto.getAccount(), e.getMessage(), e);
 
             throw new TransferException(
-                    ErrorStatus.BAD_REQUEST,
-                    "잔액 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                    ErrorStatus.BAD_GATEWAY,
+                    "은행 API 호출 실패: " + e.getMessage(),
+                    transactionId
+            );
+
+        } catch (Exception e) {
+            log.error("[잔액 확인 알 수 없는 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccount(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.INTERNAL_SERVER_ERROR,
+                    "잔액 확인 중 예기치 못한 오류가 발생했습니다.",
                     transactionId
             );
         }
     }
+
 
     // 송금 가능 여부 검사
     public void checkTransferable(String transactionId, CheckTransferableRequestDto requestDto) {
         try {
             var res = bankClient.checkTransferable(requestDto);
 
-            // API 응답 자체 실패
-            if (!res.isSuccess()) {
+            if (isFailedResponse(res)) {
                 log.error("[송금 가능 여부 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
                         transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
 
@@ -191,9 +222,9 @@ public class BankApiService {
 
             Map<String, Object> resultMap = res.getResult();
             Boolean transferable = (Boolean) resultMap.get("transferable");
+            boolean isNotTransferable = Boolean.FALSE.equals(transferable);
 
-            // transferable false 또는 null 일 때
-            if (Boolean.FALSE.equals(transferable)) {
+            if (isNotTransferable) {
                 log.warn("[송금 불가] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccount());
 
                 throw new TransferException(
@@ -205,118 +236,158 @@ public class BankApiService {
 
             log.info("[송금 가능 확인 성공] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccount());
 
-        } catch (Exception e) {
-            if (e instanceof TransferException) {
-                throw e;
-            }
-            // 그 외 예외처리
-            log.error("[송금 가능 여부 검사 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+        } catch (TransferException e) {
+            throw e;
+
+        } catch (FeignException e) {
+            log.error("[송금 가능 여부 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
                     transactionId, requestDto.getAccount(), e.getMessage(), e);
 
             throw new TransferException(
-                    ErrorStatus.TRANSFER_NOT_ALLOWED,
-                    "송금 가능 여부 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                    ErrorStatus.BAD_GATEWAY,
+                    "은행 API 호출 실패: " + e.getMessage(),
+                    transactionId
+            );
+
+        } catch (Exception e) {
+            log.error("[송금 가능 여부 확인 알 수 없는 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getAccount(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.INTERNAL_SERVER_ERROR,
+                    "송금 가능 여부 확인 중 예기치 못한 오류가 발생했습니다.",
                     transactionId
             );
         }
     }
 
 
+
     // 출금 요청
     public void withdraw(String transactionId, WithdrawRequestDto requestDto) {
         try {
-            log.info("[출금 요청] trxId: {}, 계좌번호: {}, 금액: {}", 
-                     transactionId, requestDto.getWithdrawAccount(), requestDto.getTransferAmount());
-                     
+            log.info("[출금 요청] trxId: {}, 계좌번호: {}, 금액: {}",
+                    transactionId, requestDto.getWithdrawAccount(), requestDto.getTransferAmount());
+
             var res = bankClient.withdraw(requestDto);
 
-            if (!res.isSuccess()) {
-                log.error("[출금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}", 
-                          transactionId, requestDto.getWithdrawAccount(), requestDto.getTransferAmount(),
-                          res.getCode(), res.getMessage());
-                          
+            if (isFailedResponse(res)) {
+                log.error("[출금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getWithdrawAccount(), requestDto.getTransferAmount(),
+                        res.getCode(), res.getMessage());
+
                 throw new TransferException(
                         ErrorStatus.WITHDRAW_FAILED,
                         "출금 실패: " + requestDto.getWithdrawAccount(),
                         transactionId
                 );
             }
-            
-            log.info("[출금 성공] trxId: {}, 계좌번호: {}, 금액: {}", 
-                     transactionId, requestDto.getWithdrawAccount(), requestDto.getTransferAmount());
-        } catch (Exception e) {
-            if (e instanceof TransferException) {
-                throw e;
-            }
-            log.error("[출금 오류] trxId: {}, 계좌번호: {}, 오류: {}", 
-                      transactionId, requestDto.getWithdrawAccount(), e.getMessage(), e);
-                      
+
+            log.info("[출금 성공] trxId: {}, 계좌번호: {}, 금액: {}",
+                    transactionId, requestDto.getWithdrawAccount(), requestDto.getTransferAmount());
+
+        } catch (TransferException e) {
+            throw e;
+
+        } catch (FeignException e) {
+            log.error("[출금 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getWithdrawAccount(), e.getMessage(), e);
+
             throw new TransferException(
-                    ErrorStatus.WITHDRAW_FAILED,
-                    "출금 처리 중 오류가 발생했습니다: " + e.getMessage(),
+                    ErrorStatus.BAD_GATEWAY,
+                    "은행 API 호출 실패: " + e.getMessage(),
+                    transactionId
+            );
+
+        } catch (Exception e) {
+            log.error("[출금 처리 중 알 수 없는 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getWithdrawAccount(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.INTERNAL_SERVER_ERROR,
+                    "출금 처리 중 예기치 못한 오류가 발생했습니다.",
                     transactionId
             );
         }
     }
 
+
     // 입금 요청
     public void deposit(String transactionId, DepositRequestDto requestDto) {
         try {
-            log.info("[입금 요청] trxId: {}, 계좌번호: {}, 금액: {}", 
-                     transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
-                     
+            log.info("[입금 요청] trxId: {}, 계좌번호: {}, 금액: {}",
+                    transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
+
             var res = bankClient.deposit(requestDto);
 
-            if (!res.isSuccess()) {
-                log.error("[입금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}", 
-                          transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount(),
-                          res.getCode(), res.getMessage());
-                          
+            if (isFailedResponse(res)) {
+                log.error("[입금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount(),
+                        res.getCode(), res.getMessage());
+
                 throw new TransferException(
                         ErrorStatus.DEPOSIT_FAILED,
                         "입금 실패: " + requestDto.getDepositAccount(),
                         transactionId
                 );
             }
-            
-            log.info("[입금 성공] trxId: {}, 계좌번호: {}, 금액: {}", 
-                     transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
-        } catch (Exception e) {
-            if (e instanceof TransferException) {
-                throw e;
-            }
-            log.error("[입금 오류] trxId: {}, 계좌번호: {}, 오류: {}", 
-                      transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
-                      
+
+            log.info("[입금 성공] trxId: {}, 계좌번호: {}, 금액: {}",
+                    transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
+
+        } catch (TransferException e) {
+            throw e;
+
+        } catch (FeignException e) {
+            log.error("[입금 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
+
             throw new TransferException(
-                    ErrorStatus.DEPOSIT_FAILED,
-                    "입금 처리 중 오류가 발생했습니다: " + e.getMessage(),
+                    ErrorStatus.BAD_GATEWAY,
+                    "은행 API 호출 실패: " + e.getMessage(),
+                    transactionId
+            );
+
+        } catch (Exception e) {
+            log.error("[입금 처리 중 알 수 없는 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
+
+            throw new TransferException(
+                    ErrorStatus.INTERNAL_SERVER_ERROR,
+                    "입금 처리 중 예기치 못한 오류가 발생했습니다.",
                     transactionId
             );
         }
     }
 
+
     // 보상 요청 (출금 계좌로 복구 입금)
     public boolean compensate(String transactionId, DepositRequestDto requestDto) {
         try {
-            log.info("[보상 입금 요청] trxId: {}, 계좌번호: {}, 금액: {}", 
-                     transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
-                     
+            log.info("[보상 입금 요청] trxId: {}, 계좌번호: {}, 금액: {}",
+                    transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
+
             var res = bankClient.deposit(requestDto);
-            
-            if (!res.isSuccess()) {
-                log.error("[보상 입금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}", 
-                          transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount(),
-                          res.getCode(), res.getMessage());
+
+            if (isFailedResponse(res)) {
+                log.error("[보상 입금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}",
+                        transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount(),
+                        res.getCode(), res.getMessage());
                 return false;
             }
-            
-            log.info("[보상 입금 성공] trxId: {}, 계좌번호: {}, 금액: {}", 
-                     transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
+
+            log.info("[보상 입금 성공] trxId: {}, 계좌번호: {}, 금액: {}",
+                    transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
             return true;
+
+        } catch (FeignException e) {
+            log.error("[보상 입금 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
+            return false;
+
         } catch (Exception e) {
-            log.error("[보상 입금 오류] trxId: {}, 계좌번호: {}, 오류: {}", 
-                      transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
+            log.error("[보상 입금 시스템 오류] trxId: {}, 계좌번호: {}, 오류: {}",
+                    transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
             return false;
         }
     }
