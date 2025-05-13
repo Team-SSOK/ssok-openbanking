@@ -81,7 +81,7 @@ public class BankApiService {
                         transactionId, requestDto.getAccountNumber(), res.getCode(), res.getMessage());
 
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_READ_FAILED,
+                        ErrorStatus.ACCOUNT_READ_FAILED, // 명세 통일 = COMMON400 수정
                         "계좌 조회 실패: " + requestDto.getAccountNumber(),
                         transactionId
                 );
@@ -95,7 +95,7 @@ public class BankApiService {
                 log.warn("[휴면계좌 감지] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccountNumber());
 
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_DORMANT,
+                        ErrorStatus.ACCOUNT_DORMANT, // 명세 통일 = COMMON400 수정
                         "휴면 계좌입니다: " + requestDto.getAccountNumber(),
                         transactionId
                 );
@@ -140,7 +140,7 @@ public class BankApiService {
                         transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
 
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_BALANCE_READ_FAILED,
+                        ErrorStatus.ACCOUNT_BALANCE_READ_FAILED, // 명세 통일 = ACCOUNT003 수정
                         "잔액 조회 실패: " + requestDto.getAccount(),
                         transactionId
                 );
@@ -169,7 +169,7 @@ public class BankApiService {
                         transactionId, requestDto.getAccount(), balance);
 
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_INSUFFICIENT_BALANCE,
+                        ErrorStatus.ACCOUNT_INSUFFICIENT_BALANCE, // 명세 통일 = ACCOUNT003 수정
                         "잔액이 부족합니다: " + requestDto.getAccount(),
                         transactionId
                 );
