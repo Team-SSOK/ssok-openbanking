@@ -130,6 +130,7 @@ public class BankApiService {
     }
 
 
+    /*
     // 잔액 확인
     public void checkBalance(String transactionId, CheckBalanceRequestDto requestDto) {
         try {
@@ -202,6 +203,7 @@ public class BankApiService {
             );
         }
     }
+    */
 
 
     // 송금 가능 여부 검사
@@ -210,12 +212,12 @@ public class BankApiService {
             var res = bankClient.checkTransferable(requestDto);
 
             if (isFailedResponse(res)) {
-                log.error("[송금 가능 여부 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
+                log.error("[송금 한도 검사 실패] trxId: {}, 계좌번호: {}, 응답코드: {}, 메시지: {}",
                         transactionId, requestDto.getAccount(), res.getCode(), res.getMessage());
 
                 throw new TransferException(
                         ErrorStatus.TRANSFER_NOT_ALLOWED,
-                        "송금 가능 여부 확인 실패: " + requestDto.getAccount(),
+                        "송금 한도 검사 실패: " + requestDto.getAccount(),
                         transactionId
                 );
             }

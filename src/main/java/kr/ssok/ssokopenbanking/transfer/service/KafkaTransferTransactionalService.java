@@ -6,7 +6,6 @@ import kr.ssok.ssokopenbanking.global.comm.KafkaCommModule;
 import kr.ssok.ssokopenbanking.global.comm.promise.CommQueryPromise;
 import kr.ssok.ssokopenbanking.global.comm.promise.PromiseMessage;
 import kr.ssok.ssokopenbanking.global.exception.TransferException;
-import kr.ssok.ssokopenbanking.transfer.dto.request.CheckBalanceRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.CheckTransferableRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.CompensateRequestDto;
 import kr.ssok.ssokopenbanking.transfer.dto.request.TransferRequestDto;
@@ -37,9 +36,11 @@ public class KafkaTransferTransactionalService {
         transactionRepository.save(tx);
 
         try {
+            /*
             // 잔액 및 송금 가능 여부 확인
             bankApiService.checkBalance(txId.toString(), CheckBalanceRequestDto.builder()
                     .account(dto.getSendAccountNumber()).build());
+            */
 
             bankApiService.checkTransferable(txId.toString(), CheckTransferableRequestDto.builder()
                     .username(dto.getSendName())
