@@ -29,9 +29,11 @@ public class TransferTransactionalService {
         transactionRepository.save(tx);
 
         try {
+            /*
             bankApiService.checkBalance(txId.toString(), CheckBalanceRequestDto.builder()
                     .account(dto.getSendAccountNumber())
                     .build());
+            */
 
             bankApiService.checkTransferable(txId.toString(), CheckTransferableRequestDto.builder()
                     .username(dto.getSendName())

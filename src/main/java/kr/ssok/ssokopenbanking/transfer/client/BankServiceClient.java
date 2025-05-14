@@ -22,10 +22,6 @@ public interface BankServiceClient {
     @PostMapping("/api/bank/account/dormant")
     BankApiResponseDto<Map<String, Object>> checkDormant(@RequestBody CheckDormantRequestDto requestDto);
 
-    // 계좌 잔액 조회
-    @PostMapping("/api/bank/account/balance")
-    BankApiResponseDto<Map<String, Object>> checkBalance(@RequestBody CheckBalanceRequestDto requestDto);
-
     // 송금 한도 검사
     @PostMapping("api/bank/account/transferable")
     BankApiResponseDto<Map<String, Object>> checkTransferable(@RequestBody CheckTransferableRequestDto requestDto);
