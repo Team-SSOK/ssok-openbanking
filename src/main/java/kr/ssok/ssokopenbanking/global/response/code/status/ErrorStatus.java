@@ -41,7 +41,7 @@ public enum ErrorStatus implements ResponseCode {
     
     // 계좌 오류
     ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACCOUNT001", "유효하지 않은 계좌입니다."),
-    ACCOUNT_DORMANT(HttpStatus.FORBIDDEN, "COMMON400", "휴면 계좌입니다."),
+    ACCOUNT_DORMANT(HttpStatus.FORBIDDEN, "ACCOUNT002", "휴면 계좌입니다."),
     ACCOUNT_INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "ACCOUNT003", "잔액이 부족합니다."),
 
     // 송금 오류
@@ -49,10 +49,12 @@ public enum ErrorStatus implements ResponseCode {
     WITHDRAW_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TRANSFER002", "출금 처리 중 오류가 발생했습니다."),
     DEPOSIT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TRANSFER003", "입금 처리 중 오류가 발생했습니다."),
     TRANSFER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "TRANSFER004", "잔액 또는 출금 한도로 인해 송금이 불가능합니다."),
+    TRANSFER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "TRANSFER005", "잔액 또는 출금 한도로 인해 송금이 불가능합니다."),
+    UNKNOWN_TRANSFER_DENIED_REASON(HttpStatus.BAD_REQUEST, "TRANSFER006", "송금이 허용되지 않는 사유입니다."),
 
     // 조회 오류
-    ACCOUNT_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON400", "계좌 목록 조회 중 오류가 발생했습니다."),
-    ACCOUNT_BALANCE_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ACCOUNT003", "계좌 잔액 조회 중 오류가 발생했습니다."),
+    ACCOUNT_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "READ001", "계좌 목록 조회 중 오류가 발생했습니다."),
+    ACCOUNT_BALANCE_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "READ002", "계좌 잔액 조회 중 오류가 발생했습니다."),
     ACCOUNT_OWNER_READ_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "READ003", "계좌 실명 조회 중 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;

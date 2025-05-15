@@ -81,7 +81,7 @@ public class BankApiService {
                         transactionId, requestDto.getAccountNumber(), res.getCode(), res.getMessage());
 
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_READ_FAILED, // 명세 통일 = COMMON400 수정
+                        ErrorStatus.ACCOUNT_READ_FAILED,
                         "계좌 조회 실패: " + requestDto.getAccountNumber(),
                         transactionId
                 );
@@ -95,7 +95,7 @@ public class BankApiService {
                 log.warn("[휴면계좌 감지] trxId: {}, 계좌번호: {}", transactionId, requestDto.getAccountNumber());
 
                 throw new TransferException(
-                        ErrorStatus.ACCOUNT_DORMANT, // 명세 통일 = COMMON400 수정
+                        ErrorStatus.ACCOUNT_DORMANT,
                         "휴면 계좌입니다: " + requestDto.getAccountNumber(),
                         transactionId
                 );
@@ -229,7 +229,7 @@ public class BankApiService {
                         );
                     }
                     throw new TransferException(
-                            ErrorStatus.TRANSFER_NOT_ALLOWED,
+                            ErrorStatus.UNKNOWN_TRANSFER_DENIED_REASON,
                             "송금 실패: " + message,
                             transactionId
                     );
@@ -249,13 +249,13 @@ public class BankApiService {
                             );
                         case "ACCOUNT4009": // 출금 한도 도달
                             throw new TransferException(
-                                    ErrorStatus.TRANSFER_NOT_ALLOWED,
+                                    ErrorStatus.TRANSFER_LIMIT_EXCEEDED,
                                     "해당 계좌의 출금 한도에 도달하였습니다: " + requestDto.getAccount(),
                                     transactionId
                             );
                         default:
                             throw new TransferException(
-                                    ErrorStatus.TRANSFER_NOT_ALLOWED,
+                                    ErrorStatus.UNKNOWN_TRANSFER_DENIED_REASON,
                                     "송금 실패: " + message,
                                     transactionId
                             );
