@@ -69,7 +69,7 @@ public class TransferTransactionalService {
 
             boolean compensated = bankApiService.compensate(
                     tx.getTransactionId().toString(),
-                    TransferMapper.toDepositRequest(tx)
+                    TransferMapper.toCompensateRequest(tx)
             );
 
             if (compensated) {
