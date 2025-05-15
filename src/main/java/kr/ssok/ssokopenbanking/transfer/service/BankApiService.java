@@ -8,6 +8,8 @@ import kr.ssok.ssokopenbanking.transfer.dto.request.*;
 import kr.ssok.ssokopenbanking.transfer.dto.response.BankApiResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -390,32 +392,36 @@ public class BankApiService {
 
 
     // 보상 요청 (출금 계좌로 복구 입금)
-    public boolean compensate(String transactionId, DepositRequestDto requestDto) {
-        try {
-            log.info("[보상 입금 요청] trxId: {}, 계좌번호: {}, 금액: {}",
-                    transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
+    @Retryable(
+            value = {FeignException.class, RuntimeException.class},
+            maxAttempts = 1,
+            backoff = @Backoff(delay = 1000, multiplier = 2)
+    )
+    public boolean compensate(String transactionId, CompensateRequestDto requestDto) {
 
-            var res = bankClient.deposit(requestDto);
+        try {
+            log.info("[보상 입금 요청] trxId: {}", transactionId);
+
+            var res = bankClient.compensate(requestDto);
 
             if (isFailedResponse(res)) {
-                log.error("[보상 입금 실패] trxId: {}, 계좌번호: {}, 금액: {}, 응답코드: {}, 메시지: {}",
-                        transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount(),
+                log.error("[보상 입금 실패] trxId: {}, 응답코드: {}, 메시지: {}",
+                        transactionId,
                         res.getCode(), res.getMessage());
-                return false;
+                throw new RuntimeException("보상 실패"); // 재시도 유도
             }
 
-            log.info("[보상 입금 성공] trxId: {}, 계좌번호: {}, 금액: {}",
-                    transactionId, requestDto.getDepositAccount(), requestDto.getTransferAmount());
+            log.info("[보상 입금 성공] trxId: {}", transactionId);
             return true;
 
         } catch (FeignException e) {
-            log.error("[보상 입금 API 호출 실패] trxId: {}, 계좌번호: {}, 오류: {}",
-                    transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
+            log.error("[보상 입금 API 호출 실패] trxId: {}, 오류: {}",
+                    transactionId, e.getMessage(), e);
             return false;
 
         } catch (Exception e) {
-            log.error("[보상 입금 시스템 오류] trxId: {}, 계좌번호: {}, 오류: {}",
-                    transactionId, requestDto.getDepositAccount(), e.getMessage(), e);
+            log.error("[보상 입금 시스템 오류] trxId: {}, 오류: {}",
+                    transactionId, e.getMessage(), e);
             return false;
         }
     }

@@ -33,4 +33,8 @@ public interface BankServiceClient {
     // 입금 이체
     @PostMapping("/api/bank/transfer/deposit")
     BankApiResponseDto<Map<String, Object>> deposit(@RequestBody DepositRequestDto requestDto);
+
+    // 보상
+    @PostMapping("/api/bank/transfer/compensate")
+    BankApiResponseDto<Map<String, Object>> compensate(@RequestBody CompensateRequestDto requestDto);
 }
