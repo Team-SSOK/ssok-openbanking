@@ -32,7 +32,7 @@ public class KafkaTransferTransactionalService {
     @Transactional
     public TransferResponseDto completeTransferTransactional(TransferRequestDto dto, UUID txId) {
         Transaction tx = Transaction.create(dto, txId);
-        tx.updateStatus(TransactionStatus.REQUESTED);
+        tx.updateStatus(TransactionStatus.COMPLETED);
         transactionRepository.save(tx);
 
         try {
@@ -47,7 +47,7 @@ public class KafkaTransferTransactionalService {
                     .account(dto.getSendAccountNumber())
                     .transferAmount(dto.getAmount()).build());
 
-            tx.updateStatus(TransactionStatus.VALIDATED);
+            // tx.updateStatus(TransactionStatus.VALIDATED);
 
             // 출금 요청
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
@@ -63,7 +63,7 @@ public class KafkaTransferTransactionalService {
                     TransferMapper.toDepositRequest(tx), 10).get();
             tx.updateStatus(TransactionStatus.DEPOSIT_SUCCESS);
 
-            tx.updateStatus(TransactionStatus.COMPLETED);
+            // tx.updateStatus(TransactionStatus.COMPLETED);
             return TransferMapper.toResponse(tx, "송금이 성공적으로 처리되었습니다.");
 
         } catch (TransferException e) {
