@@ -25,7 +25,7 @@ public class TransferTransactionalService {
     @Transactional
     public TransferResponseDto completeTransferTransactional(TransferRequestDto dto, UUID txId) {
         Transaction tx = Transaction.create(dto, txId);
-        tx.updateStatus(TransactionStatus.REQUESTED);
+        tx.updateStatus(TransactionStatus.COMPLETED);
         transactionRepository.save(tx);
 
         try {
@@ -41,7 +41,7 @@ public class TransferTransactionalService {
                     .transferAmount(dto.getAmount())
                     .build());
 
-            tx.updateStatus(TransactionStatus.VALIDATED);
+            // tx.updateStatus(TransactionStatus.VALIDATED);
 
             tx.updateStatus(TransactionStatus.WITHDRAW_REQUESTED);
             bankApiService.withdraw(txId.toString(), TransferMapper.toWithdrawRequest(tx));
@@ -51,7 +51,7 @@ public class TransferTransactionalService {
             bankApiService.deposit(txId.toString(), TransferMapper.toDepositRequest(tx));
             tx.updateStatus(TransactionStatus.DEPOSIT_SUCCESS);
 
-            tx.updateStatus(TransactionStatus.COMPLETED);
+            // tx.updateStatus(TransactionStatus.COMPLETED);
             return TransferMapper.toResponse(tx, "송금이 성공적으로 처리되었습니다.");
 
         } catch (TransferException e) {
