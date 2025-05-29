@@ -13,10 +13,20 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/alerts")
 public class TestAlertController {
+
     @PostMapping
-    public ResponseEntity<Void> receiveAlert(@RequestBody Map<String, String> body) {
-        String message = body.get("message");
-        log.warn("[ALERT] {}", message);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> receiveAlert(@RequestBody(required = false) Map<String, Object> body) {
+        try {
+            if (body == null) {
+                log.warn("[ALERT] Request body is null.");
+            } else {
+                Object message = body.get("message");
+                log.warn("[ALERT] {}", message != null ? message.toString() : "message field is missing.");
+            }
+        } catch (Exception e) {
+            log.error("[ALERT] Failed to process alert payload.", e);
+        }
+
+        return ResponseEntity.ok().build(); // 항상 200 OK 반환
     }
 }
