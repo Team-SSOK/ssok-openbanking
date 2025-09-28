@@ -16,12 +16,13 @@ LG CNS Am Inspire Camp 1기 3조 금융팀의 최종 프로젝트 **SSOK OPENBAN
 
 ## 🧱 기술 스택
 
-| 구성 요소           | 설명                       |
-|-----------------|--------------------------|
-| Spring Boot     | RESTful API 서버 구현        |
-| Spring Data JPA | 데이터 접근 계층 구성             |
-| MariaDB         | 개발용 임베디드 DB 또는 운영용 RDBMS |
-| Lombok          | 반복 코드 자동 생성              |
+| 구성 요소           | 설명                        |
+| --------------- | ------------------------- |
+| Spring Boot     | RESTful API 서버 구현         |
+| Spring Data JPA | 데이터 접근 계층 구성              |
+| MariaDB         | 개발용 임베디드 DB 또는 운영용 RDBMS  |
+| Lombok          | 반복 코드 자동 생성               |
+| Kafka           | 이벤트 기반 비동기 메시징 및 보상 처리 |
 
 ---
 
